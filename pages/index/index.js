@@ -17,11 +17,6 @@ Page({
     })
   },
   onLoad: function () {
-    let test = new engine.BaseObject();
-    test["3"] = 13;
-    console.log(test);
-    let test2 = new engine.BaseScene();
-    console.log(test2.children);
     if (app.globalData.userInfo) {
       this.setData({
         userInfo: app.globalData.userInfo,
