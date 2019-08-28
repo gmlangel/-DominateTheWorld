@@ -1,5 +1,4 @@
 //index.js
-const engine = require("../../gameEngine/GMLCore.js")
 //获取应用实例
 const app = getApp()
 

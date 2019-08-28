@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/gameMain",
     "pages/index/index",
     "pages/logs/logs"
   ],

@@ -1,0 +1,3 @@
+<!--pages/gameMain.wxml-->
+<canvas canvas-id="gameCanvas" disable-scroll="true" style="width:100%;height:100%;" bindtouchstart="onCanvasTouchBegin" bindtouchend="onCanvasTouchEnd" bindtouchmove="onCanvasTouchMove" bindtouchcancel="onCanvasTouchCancel"></canvas>
+
