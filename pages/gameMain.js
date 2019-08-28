@@ -1,13 +1,18 @@
 // pages/gameMain.js
 //导入游戏引擎
 const engine = require("../gameEngine/GMLCore.js")
+const gm = require("../gameEngine/AppDelegate.js")
 Page({
 
   /**
    * 页面的初始数据
    */
   data: {
-
+    /*top:0,
+    left: 0,
+    width:100,
+    height:100,
+    scale:1 用于解决canvas画图模糊的问题，但是我发现在真机上只要设置context.scale后并不模糊*/
   },
 
   /**
@@ -31,18 +36,27 @@ Page({
   onReady: function () {
     //获取canvasContext
     this.gameCanvasID = "gameCanvas";
-    this.context = wx.createCanvasContext(this.gameCanvasID, this);
-    this.context.setFillStyle("#ff0000");
-    this.context.fillRect(0,0,100,100);
-    this.context.draw();
-    console.log(this.sysInfo,this.gWidth,this.gHeight);
+    this.canvasContext = wx.createCanvasContext(this.gameCanvasID, this);
+    let self = this;
+    if(self.checkCanStart()){
+      self.startGame();//直接启动
+    }else{
+      let timeID = setInterval(() => {
+        //每隔100ms检测一次
+        if (self.checkCanStart()) {
+          self.startGame();
+          clearInterval(timeID);
+        }
+      }, 100);
+    }
+    console.log(this.sysInfo);
   },
 
   /**
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-
+    
   },
 
   /**
@@ -84,7 +98,7 @@ Page({
    * 
   */
   onCanvasTouchBegin: function(e){
-    console.log("===canVasDown")
+    console.log("===canVasDown",e)
   },
 
   /**
@@ -92,7 +106,7 @@ Page({
      * 
     */
   onCanvasTouchEnd: function (e) {
-    console.log("===canVasEnd")
+    console.log("===canVasEnd",e)
   },
 
   /**
@@ -100,7 +114,7 @@ Page({
    * 
   */
   onCanvasTouchMove: function (e) {
-    console.log("===canVasMove")
+    console.log("===canVasMove",e)
   },
 
   /**
@@ -110,5 +124,30 @@ Page({
   onCanvasTouchCancel: function (e) {
     console.log("===canVasCancel")
   },
-
+  /**
+   * 开始游戏
+  */
+  startGame:function(){
+    // //根据屏幕比例 重新计算canvas的样式，用于解决canvas画图模糊的问题，但是我发现在真机上只要设置context.scale后并不模糊
+    // let pixlRatio = this.sysInfo.pixelRatio;
+    // let w = this.gWidth;
+    // let h = this.gHeight;
+    // let s = 1.0 / pixlRatio;
+    // this.setData({
+    //   width: 100 * pixlRatio,
+    //   height: 100 * pixlRatio,
+    //   top: h * (s - 1),
+    //   left: w * (s - 1),
+    //   scale:s
+    // })
+    // 
+    //开始游戏
+    gm.AppDelegate.instance().start(this.canvasContext,this.sysInfo);
+  },
+  /*
+  检查是否可以开始
+  */
+  checkCanStart:function(){
+    return this.canvasContext && this.sysInfo;
+  }
 })
