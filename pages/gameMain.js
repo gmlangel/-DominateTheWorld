@@ -99,6 +99,8 @@ Page({
   */
   onCanvasTouchBegin: function(e){
     console.log("===canVasDown",e)
+    if (wx.ongTouchBegin)
+      wx.ongTouchBegin(e);//将事件派发到游戏引擎中
   },
 
   /**
@@ -107,6 +109,8 @@ Page({
     */
   onCanvasTouchEnd: function (e) {
     console.log("===canVasEnd",e)
+    if (wx.ongTouchEnd)
+      wx.ongTouchEnd(e);
   },
 
   /**
@@ -115,6 +119,8 @@ Page({
   */
   onCanvasTouchMove: function (e) {
     console.log("===canVasMove",e)
+    if (wx.ongTouchMove)
+      wx.ongTouchMove(e);
   },
 
   /**
@@ -123,6 +129,8 @@ Page({
   */
   onCanvasTouchCancel: function (e) {
     console.log("===canVasCancel")
+    if (wx.ongTouchCancel)
+      wx.ongTouchCancel(e);
   },
   /**
    * 开始游戏

@@ -29,14 +29,18 @@ class AppDelegate{
     let s = 1.0 / temp;
     canvasContext.setFillStyle("#ff0000");
     canvasContext.fillRect(0, 0, sysInfo.windowWidth * s, sysInfo.windowHeight * s);
-
-    canvasContext.save();
+    
+    canvasContext.setStrokeStyle("#000000");
+    canvasContext.strokeText("这是侧是是是侧是是是侧是是是侧是是是侧是是是侧是是是侧是是是侧是是是侧是是是",10,5);
+    
     canvasContext.drawImage("../assets/NewDragon.png", 0, 0, 300, 300, 0, 0, 300*s, 300*s);
 
-    canvasContext.restore()
     canvasContext.draw();
-    // //初始化场景
-    // this.scene = new gEngine.BaseScene();
+    //初始化系统类
+    wx.sysInfo = sysInfo;
+    //初始化场景
+    let bs = new gEngine.BaseScene(canvasContext, sysInfo.windowWidth, sysInfo.windowHeight);
+    console.log(bs.width,bs.height);
   }
 
   /*

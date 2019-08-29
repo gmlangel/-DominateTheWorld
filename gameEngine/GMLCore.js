@@ -38,51 +38,46 @@ class BaseObject{
  * 基础场景管理类
  * */
 class BaseScene extends BaseObject{
+    //必须先调用初始化后，才可以调用main
     static get main() {
-        if (!window.gmlbaseScene)
-            window.gmlbaseScene = new BaseScene();
-        return window.gmlbaseScene;
+        return wx.gmlbaseScene;
     }
-    constructor(){
+    constructor(_canvasContext,_w,_h){
         super();
-        this._mainCanvas = new GMLCanvas();//主画布
+        this._mainCanvasContext = _canvasContext;//主画布
         this._rootSprite = new GMLSprite();//根显示容器
         this._currentDrawIndex = 0;//全局图层绘制索引,用于鼠标点击检测
         this._defaultOverDisItem = null;//鼠标移入时的响应可视化对象
+        this._width = _w;//设置宽度
+        this._height = _h;//设置高度
+        wx.gmlbaseScene = this;
     }
 
     get width(){
-        return this._mainCanvas.width / ScreenManager.main.quilaty;
+        return this._width / wx.sysInfo.pixelRatio;
     }
 
     get height(){
-        return this._mainCanvas.height / ScreenManager.main.quilaty;
+      return this._height / wx.sysInfo.pixelRatio;
     }
 
-    start(_wxCanvas){
-        //将画布添加至document
-        document.body.appendChild(this._mainCanvas.canvas);
-        this._mainCanvas.canvas.style.zIndex = 0;
-        this._mainCanvas.canvas.style.position = "absolute"
-        this._mainCanvas.canvas.style.left = "0px";
-        this._mainCanvas.canvas.style.top = "0px";
-
+    start(){
         //添加系统事件检测
         this._addSystemEvents();
 
-      //   //开始时间轴
-      // TimeLine.main.start(this.updateAnimation, _wxCanvas);
+        //开始时间轴
+        TimeLine.main.start(this.updateAnimation, this._mainCanvasContext);
     }
 
     get frameRate(){
-        return 0;//TimeLine.main.frameRate;
+        return TimeLine.main.frameRate;
     }
 
     /**
      * 设置帧频
      * */
     set frameRate(n){
-        //TimeLine.main.frameRate = n;
+        TimeLine.main.frameRate = n;
     }
 
 
@@ -90,110 +85,99 @@ class BaseScene extends BaseObject{
      * 私有函数,添加系统事件检测
      * */
     _addSystemEvents(){
-        //截获右键点击事件
-        document.oncontextmenu = this._onRightClick;
-        //添加系统级的通知监听
-        window.addEventListener("keydown",function(evt){
-            BaseScene.main._postKeyEvents(GMLKeyBoardEvent.KeyDown,evt);
-        })
-        window.addEventListener("keyup",function(evt){
-            BaseScene.main._postKeyEvents(GMLKeyBoardEvent.KeyUp,evt);
-        })
+        // //截获右键点击事件
+        // document.oncontextmenu = this._onRightClick;
+        // //添加系统级的通知监听
+        // window.addEventListener("keydown",function(evt){
+        //     BaseScene.main._postKeyEvents(GMLKeyBoardEvent.KeyDown,evt);
+        // })
+        // window.addEventListener("keyup",function(evt){
+        //     BaseScene.main._postKeyEvents(GMLKeyBoardEvent.KeyUp,evt);
+        // })
 
-        window.addEventListener("mousedown",function(evt){
-            //执行鼠标down检测
-            BaseScene.main._mouseHitTestAndDispatch(evt,GMLMouseEvent.Down);
-        })
+      wx.ongTouchBegin = function (evt) {
+        //执行鼠标down检测
+        BaseScene.main._mouseHitTestAndDispatch(evt, GMLMouseEvent.Down);
+      }
 
-        window.addEventListener("mouseup",function(evt){
-            //执行鼠标up检测
-            BaseScene.main._mouseHitTestAndDispatch(evt,GMLMouseEvent.Up);
-        })
+      wx.ongTouchEnd = function (evt) {
+        //执行鼠标up检测
+        BaseScene.main._mouseHitTestAndDispatch(evt, GMLMouseEvent.Up);
+      }
 
-        window.addEventListener("click",function(evt){
-            //执行鼠标click检测
-            BaseScene.main._mouseHitTestAndDispatch(evt,GMLMouseEvent.Click);
-        })
-
-        window.addEventListener("dblclick",function(evt){
-            //执行鼠标doubleClick检测
-            BaseScene.main._mouseHitTestAndDispatch(evt,GMLMouseEvent.DoubleClick);
-        })
-
-        window.addEventListener("mousemove",function(evt){
-            //let arg = {"x":evt.x,"y":evt.y};//arg 之所以evt.x向左偏移10px,是因为主canvas并没有在html的0,0点,而是10,10点
-            ////鼠标over,out检测
-            let disPlayItem = BaseScene.main._mouseHitTest(evt,GMLMouseEvent.Over);
-            let item = BaseScene.main._defaultOverDisItem;
-            if(disPlayItem) {
-                if(item)
-                {
-                    if(disPlayItem==item)
-                    {
-                        return;
-                    }
-                    BaseScene.main._defaultOverDisItem = null;
-                    let outNe = new GMLMouseEvent(GMLMouseEvent.Out,{globelX:evt.x,globelY:evt.y});
-                    item.dispatchEvent(outNe);//向其派发鼠标Out事件
-
-                    BaseScene.main._defaultOverDisItem = disPlayItem;
-                    let overNe = new GMLMouseEvent(GMLMouseEvent.Over,{globelX:evt.x,globelY:evt.y});
-                    disPlayItem.dispatchEvent(overNe);//向其派发鼠标Over事件
-                }else{
-                    BaseScene.main._defaultOverDisItem = disPlayItem;
-                    let ne2 = new GMLMouseEvent(GMLMouseEvent.Over,{globelX:evt.x,globelY:evt.y});
-                    disPlayItem.dispatchEvent(ne2);//向其派发鼠标Over事件
-                }
-            }else{
-                if(item){
-                    BaseScene.main._defaultOverDisItem = null;
-                    let ne = new GMLMouseEvent(GMLMouseEvent.Out,{globelX:evt.x,globelY:evt.y});
-                    item.dispatchEvent(ne);//向其派发鼠标移出事件
-                }
+      wx.ongTouchMove = function (evt) {
+        //let arg = {"x":evt.x,"y":evt.y};//arg 之所以evt.x向左偏移10px,是因为主canvas并没有在html的0,0点,而是10,10点
+        ////鼠标over,out检测
+        let disPlayItem = BaseScene.main._mouseHitTest(evt, GMLMouseEvent.Over);
+        let item = BaseScene.main._defaultOverDisItem;
+        if (disPlayItem) {
+          if (item) {
+            if (disPlayItem == item) {
+              return;
             }
+            BaseScene.main._defaultOverDisItem = null;
+            let outNe = new GMLMouseEvent(GMLMouseEvent.Out, { globelX: evt.x, globelY: evt.y });
+            item.dispatchEvent(outNe);//向其派发鼠标Out事件
 
-            //鼠标move事件派发
-            BaseScene.main._mouseHitTestAndDispatch(evt,GMLMouseEvent.Move);
-        })
+            BaseScene.main._defaultOverDisItem = disPlayItem;
+            let overNe = new GMLMouseEvent(GMLMouseEvent.Over, { globelX: evt.x, globelY: evt.y });
+            disPlayItem.dispatchEvent(overNe);//向其派发鼠标Over事件
+          } else {
+            BaseScene.main._defaultOverDisItem = disPlayItem;
+            let ne2 = new GMLMouseEvent(GMLMouseEvent.Over, { globelX: evt.x, globelY: evt.y });
+            disPlayItem.dispatchEvent(ne2);//向其派发鼠标Over事件
+          }
+        } else {
+          if (item) {
+            BaseScene.main._defaultOverDisItem = null;
+            let ne = new GMLMouseEvent(GMLMouseEvent.Out, { globelX: evt.x, globelY: evt.y });
+            item.dispatchEvent(ne);//向其派发鼠标移出事件
+          }
+        }
 
-        window.addEventListener("mouseout",function(evt){
-            if(BaseScene.main._defaultOverDisItem){
-                let ne = new GMLMouseEvent(GMLMouseEvent.Out,{globelX:evt.x,globelY:evt.y});
-                BaseScene.main._defaultOverDisItem.dispatchEvent(ne)//向指定对象派发mouseout事件
-            }
-        });
+        //鼠标move事件派发
+        BaseScene.main._mouseHitTestAndDispatch(evt, GMLMouseEvent.Move);
+      }
+
+      //当手指取消操作时触发
+      wx.ongTouchCancel = function (evt) {
+        if (BaseScene.main._defaultOverDisItem) {
+          let ne = new GMLMouseEvent(GMLMouseEvent.Out, { globelX: evt.x, globelY: evt.y });
+          BaseScene.main._defaultOverDisItem.dispatchEvent(ne)//向指定对象派发mouseout事件
+        }
+      }
     }
 
-    /**
-     * 向监听对象发送KeyBoardEvent
-     * */
-    _postKeyEvents(eventTypeStr,evt){
-        let ne = new GMLKeyBoardEvent(
-            eventTypeStr,
-            {
-                "code":evt["code"],
-                "charCode":evt["charCode"],
-                "ctrlKey":evt["ctrlKey"],
-                "currentTarget":evt["currentTarget"],
-                "key":evt["key"],
-                "keyCode":evt["keyCode"],
-                "location":evt["location"],
-                "timeStamp":evt["timeStamp"]
-            }
-        )
-        BaseNotificationCenter.main.postNotify(eventTypeStr,ne)
-        //let observerSet = BaseNotificationCenter.main.getObserversByKey(eventTypeStr);
-        //if(observerSet){
-        //    //遍历set 循环进行点检测
-        //    observerSet.forEach(function(mp,key){
-        //        for(let item of mp.entries())
-        //        {
-        //            let obs = item[0];
-        //            obs.dispatchEvent(ne);
-        //        }
-        //    })
-        //}
-    }
+    // /**
+    //  * 向监听对象发送KeyBoardEvent
+    //  * */
+    // _postKeyEvents(eventTypeStr,evt){
+    //     let ne = new GMLKeyBoardEvent(
+    //         eventTypeStr,
+    //         {
+    //             "code":evt["code"],
+    //             "charCode":evt["charCode"],
+    //             "ctrlKey":evt["ctrlKey"],
+    //             "currentTarget":evt["currentTarget"],
+    //             "key":evt["key"],
+    //             "keyCode":evt["keyCode"],
+    //             "location":evt["location"],
+    //             "timeStamp":evt["timeStamp"]
+    //         }
+    //     )
+    //     BaseNotificationCenter.main.postNotify(eventTypeStr,ne)
+    //     //let observerSet = BaseNotificationCenter.main.getObserversByKey(eventTypeStr);
+    //     //if(observerSet){
+    //     //    //遍历set 循环进行点检测
+    //     //    observerSet.forEach(function(mp,key){
+    //     //        for(let item of mp.entries())
+    //     //        {
+    //     //            let obs = item[0];
+    //     //            obs.dispatchEvent(ne);
+    //     //        }
+    //     //    })
+    //     //}
+    // }
 
     /**
      * 比较两个可视化对象,谁的层级更高,则返回谁
@@ -214,6 +198,7 @@ class BaseScene extends BaseObject{
         let observerSet = BaseNotificationCenter.main.getObserversByKey(type);
         let argX = evt.x;
         let argY = evt.y;
+        let touchID = evt.identifier;
         if(observerSet){
             //遍历set 循环进行点检测
             observerSet.forEach(function(mp,key){
@@ -238,33 +223,39 @@ class BaseScene extends BaseObject{
                 }
             })
         }
-        return tempResultDisplayObj;
+      if (tempResultDisplayObj)
+        tempResultDisplayObj.touchID = touchID;
+      return tempResultDisplayObj;
     }
 
     /**
      * 鼠标检测,并派发事件
      * */
     _mouseHitTestAndDispatch(evt,type){
-        let tempResultDisplayObj = BaseScene.main._mouseHitTest(evt,type);
-        if(tempResultDisplayObj){
-            let ne = new GMLMouseEvent(type,{globelX:evt.x,globelY:evt.y});
+      let arr = evt.changedTouches;
+      arr.forEach((touchObj,i)=>{
+          let tempResultDisplayObj = BaseScene.main._mouseHitTest(touchObj, type);
+          if (tempResultDisplayObj) {
+            let ne = new GMLMouseEvent(type, { id: touchObj.identifier, globelX: touchObj.x, globelY: touchObj.y });
             tempResultDisplayObj.dispatchEvent(ne);//向指定对象派发事件
             //console.log(tempResultDisplayObj.name);
-        }
+          }
+      })
+        
     }
 
-    /**
-     * 自定义右键点击事件
-     * */
-    _onRightClick(evt){
-        //注意,这里的this指代的是document
+    // /**
+    //  * 自定义右键点击事件
+    //  * */
+    // _onRightClick(evt){
+    //     //注意,这里的this指代的是document
 
-        //点检测,并向监听者派发事件
-        BaseScene.main._mouseHitTestAndDispatch(evt,GMLMouseEvent.RightClick);
-        //执行自己的鼠标右键点击操作,比如显示自定义菜单
+    //     //点检测,并向监听者派发事件
+    //     BaseScene.main._mouseHitTestAndDispatch(evt,GMLMouseEvent.RightClick);
+    //     //执行自己的鼠标右键点击操作,比如显示自定义菜单
 
-        return false;//屏蔽屏幕源生的右键菜单
-    }
+    //     return false;//屏蔽屏幕源生的右键菜单
+    // }
 
     /**
      * 时间轴更新动画函数
@@ -274,19 +265,9 @@ class BaseScene extends BaseObject{
         BaseNotificationCenter.main.postNotify(GMLEvent.EnterFrame,evt);
         BaseScene.main._currentDrawIndex = 0;
         //这里的this 是一个undefined 因为他是window.requestAnimationFrame 的一个回调函数
-        let ctx = BaseScene.main._mainCanvas.context2D;
-        //先清空
-        ctx.clearRect(0,0,BaseScene.main._mainCanvas.width,BaseScene.main._mainCanvas.height);
+        let ctx = BaseScene.main._canvasContext
         //再重绘
         BaseScene.main._rootSprite.drawInContext(ctx,0,0,1,1);//跟容器必须绘制在ctx的0,0位置且 缩放必须为1倍
-    }
-
-    /**
-     * 尺寸变更
-     * */
-    resize(w,h){
-        this._mainCanvas.width = w;
-        this._mainCanvas.height = h;
     }
 
     /**
@@ -644,45 +625,6 @@ class GMLTextFieldAliginEnum{
 
 
 //显示对象类型声明----------------begin-------------------------
-/**
- * 画布
- * */
-class GMLCanvas extends BaseEventDispatcher{
-    constructor(){
-        super();
-        this.canvas = document.createElement("canvas");
-
-        this._argChanged = true;
-        this._width = 0;//宽度
-        this._height = 0;//高度
-    }
-
-    get width(){
-        return this._width;
-    }
-    set width(n){
-        this._width = (n < 0 ? 0 : n) * ScreenManager.main.quilaty;
-        this.canvas.width = this._width + "";
-    }
-    get height(){
-        return this._height;
-    }
-    set height(n){
-        this._height = (n < 0 ? 0 : n) * ScreenManager.main.quilaty;
-        this.canvas.height = this._height + "";
-    }
-
-
-    get context2D(){
-        if(this._argChanged)
-        {
-            //重新创建画布上下文
-            this._context2D = this.canvas.getContext("2d");
-        }
-        return this._context2D;
-    }
-
-}
 
 /**
  * 显示对象基础类
@@ -889,7 +831,7 @@ class GMLShape extends GMLDisplay{
         //按照内部对其方式进行位置偏移计算
         this._rectVect[0] -= this._rectVect[2] * this._itiwX;
         this._rectVect[1] -= this._rectVect[3] * this._itiwY;
-        let quilaty = ScreenManager.main.quilaty;
+      let quilaty = wx.sysInfo.pixelRatio
         //开始绘制
         if(this._fColorStr != "#0")
         {
@@ -1150,7 +1092,7 @@ class GMLImage extends GMLDisplay{
                 this._rectVect[0] -= this._rectVect[2] * this._itiwX;
                 this._rectVect[1] -= this._rectVect[3] * this._itiwY;
                 //有截取尺寸,则按9参数来绘制
-                let quilaty = ScreenManager.main.quilaty;
+              let quilaty = wx.sysInfo.pixelRatio
                 ctx.drawImage(this.img,this.zhuaquRect[0],this.zhuaquRect[1],this.zhuaquRect[2],this.zhuaquRect[3],this._rectVect[0] * quilaty,this._rectVect[1] * quilaty,this._rectVect[2] * quilaty,this._rectVect[3] * quilaty);
             }else{
                 //没有截取尺寸,则按5参数来绘制
@@ -1163,7 +1105,7 @@ class GMLImage extends GMLDisplay{
                 //按照内部对其方式进行位置偏移计算
                 this._rectVect[0] -= this._rectVect[2] * this._itiwX;
                 this._rectVect[1] -= this._rectVect[3] * this._itiwY;
-                let quilaty = ScreenManager.main.quilaty;
+              let quilaty = wx.sysInfo.pixelRatio
                 ctx.drawImage(this.img,this._rectVect[0] * quilaty,this._rectVect[1] * quilaty,this._rectVect[2] * quilaty,this._rectVect[3] * quilaty);
             }
         }
@@ -1379,7 +1321,7 @@ class GMLStaticTextField extends GMLDisplay{
         let tOffsetY = offsetY + this._y * offsetScaleY;
         let tOffsetScaleX = offsetScaleX * this._scaleX;
         let tOffsetScaleY = offsetScaleY * this._scaleY;
-        let quilaty = ScreenManager.main.quilaty;
+      let quilaty = wx.sysInfo.pixelRatio
         //设置文本样式
         ctx.textAlign = this._hAliginment;
         ctx.font = (this._fontSize * tOffsetScaleX * quilaty)+ "px " + this._fontName + " " + (this.isBold ? "bold" : "solid");
@@ -1432,7 +1374,7 @@ class GMLStaticTextField extends GMLDisplay{
         let lineWidth = 0;
         var lastSubStrIndex= 0;
         let tempCharWidth = 0;
-        let maxW = this._width * ScreenManager.main.quilaty * this._scaleX;
+      let maxW = this._width * wx.sysInfo.pixelRatio * this._scaleX;
         for(let i=0;i<str.length;i++){
             tempCharWidth = ctx.measureText(str[i]).width;
             lineWidth+= tempCharWidth;
@@ -2368,74 +2310,28 @@ class OSManager{
     }
 
     static get main(){
-        if(!window.gOSManager)
-            window.gOSManager = new OSManager();
-        return window.gOSManager;
+        if(!wx.gOSManager)
+            wx.gOSManager = new OSManager(wx.sysInfo);
+        return wx.gOSManager;
     }
 
-    constructor(){
-        this.gOS = this.detectOS();
+    constructor(_sysInfo){
+      this.sysInfo = _sysInfo;
+      this.gOS = this.detectOS(_sysInfo);
     }
 
     //获取操作系统版本
-    detectOS() {
-        let sUserAgent = navigator.userAgent;
-        let isWin = (navigator.platform == "Win32") || (navigator.platform == "Windows");
-        let isMac = (navigator.platform == "Mac68K") || (navigator.platform == "MacPPC") || (navigator.platform == "Macintosh") || (navigator.platform == "MacIntel");
-        if (isMac) return "Mac";
-        let isIos = (navigator.platform == "iPhone") || (navigator.platform == "iPad")
-        if (isIos) return "IOS";
-        let isAndroid = String(navigator.platform).toLocaleLowerCase().indexOf("android") > -1
-        if (isAndroid) return "Android";
-
-        let isUnix = (navigator.platform == "X11") && !isWin && !isMac;
-        if (isUnix) return "Unix";
-        let isLinux = (String(navigator.platform).indexOf("Linux") > -1);
-        if (isLinux) return "Linux";
-        if (isWin) {
-            var isWin2K = sUserAgent.indexOf("Windows NT 5.0") > -1 || sUserAgent.indexOf("Windows 2000") > -1;
-            if (isWin2K) return "Win2000";
-            var isWinXP = sUserAgent.indexOf("Windows NT 5.1") > -1 || sUserAgent.indexOf("Windows XP") > -1;
-            if (isWinXP) return "WinXP";
-            var isWin2003 = sUserAgent.indexOf("Windows NT 5.2") > -1 || sUserAgent.indexOf("Windows 2003") > -1;
-            if (isWin2003) return "Win2003";
-            var isWinVista= sUserAgent.indexOf("Windows NT 6.0") > -1 || sUserAgent.indexOf("Windows Vista") > -1;
-            if (isWinVista) return "WinVista";
-            var isWin7 = sUserAgent.indexOf("Windows NT 6.1") > -1 || sUserAgent.indexOf("Windows 7") > -1;
-            if (isWin7) return "Win7";
-            var isWin10 = sUserAgent.indexOf("Windows NT 10") > -1 || sUserAgent.indexOf("Windows 10") > -1;
-            if (isWin10) return "Win10";
-        }
-        return "other";
+    detectOS(_sysInfo) {
+      let osIdent = _sysInfo.system;
+      if(osIdent.toLocaleLowerCase().indexOf("ios")>-1)
+        return "IOS"
+      else if (osIdent.toLocaleLowerCase().indexOf("android") > -1)
+        return "ANDROID"
+      else
+        return "OTHER"
     }
 }
 
-/*
- * 屏幕管理类
- * **/
-class ScreenManager{
-    static get main(){
-        if(!window.gmlscreen)
-            window.gmlscreen = new ScreenManager();
-        return window.gmlscreen;
-    }
-
-    constructor(){
-        this._quilaty = 1;//清晰度, 默认为1倍(对应1倍屏幕)   .如果为2则对应2倍屏幕.最多支持8倍
-    }
-
-    get quilaty(){
-        return this._quilaty
-    }
-
-    set quilaty(n){
-        this._quilaty = n < 0 ? 0 : n;
-        this._quilaty = this._quilaty > 8 ? 8 : this._quilaty;
-        //每次清晰度修改,都会更新一系列相关设置
-        document.body.style.zoom = 1.0 / this._quilaty;
-        window.dispatchEvent(new Event("resize"));
-    }
-}
 
 module.exports = {
   "BaseObject": BaseObject,
@@ -2443,7 +2339,6 @@ module.exports = {
   "BaseEventDispatcher": BaseEventDispatcher,
   "BaseNotificationCenter": BaseNotificationCenter,
   "GMLTextFieldAliginEnum": GMLTextFieldAliginEnum,
-  "GMLCanvas": GMLCanvas,
   "GMLDisplay": GMLDisplay,
   "GMLShape": GMLShape,
   "GMLSprite": GMLSprite,
@@ -2458,6 +2353,5 @@ module.exports = {
   "GMLVideo": GMLVideo,
   "ResourceManager": ResourceManager,
   "GTool": GTool,
-  "OSManager": OSManager,
-  "ScreenManager": ScreenManager
+  "OSManager": OSManager
 }
