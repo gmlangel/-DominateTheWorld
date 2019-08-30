@@ -1521,9 +1521,9 @@ class TimeLine extends BaseObject{
 
     //静态变量 主动画时间轴
     static get main(){
-        if(!window.mainTimeLine)
-            window.mainTimeLine = new TimeLine();
-        return window.mainTimeLine;
+        if(!wx.mainTimeLine)
+            wx.mainTimeLine = new TimeLine();
+        return wx.mainTimeLine;
     }
 
     constructor(){
@@ -1531,8 +1531,8 @@ class TimeLine extends BaseObject{
         this._frameRate = 30;//帧频
         this._timekuadu = 1000.0/this._frameRate;//帧频跨度, 类内部使用,用于计算是否执行帧频函数
         this._currentTimeStep = 0;
-        this._aniID = 0;//动画函数ID
         this._isPause = false;
+        this._worker = null;
     }
 
     get frameRate(){
@@ -1556,7 +1556,18 @@ class TimeLine extends BaseObject{
         if(frameFunc && typeof(frameFunc) === "function")
         {
             this.frameFunc = frameFunc;
-            this._aniID = setInterval(TimeLine.main.updateTimeLine,20)
+            //如果动画计时线程不存在，则需创建, 微信小程序限制，同一时间只能有一个worker在运行，
+            //多余的worker需要Worker.terminate停用之前的worker后再启用
+            if(this._worker == null){
+              this._worker = wx.createWorker("gameEngine/wxworkers/timelineWorker.js");
+              this._worker.postMessage({ msg:"startAnimationFrame"})
+              this._worker.onMessage((evt)=>{
+                let cmd = evt.msg || "";
+                if (cmd == "enterFrame"){
+                  TimeLine.main.updateTimeLine();
+                }
+              })
+            }
         }
     }
 
@@ -1564,7 +1575,7 @@ class TimeLine extends BaseObject{
      * 帧频函数
      * */
   updateTimeLine(){
-        timeStep = new Date().valueOf()
+        let timeStep = new Date().valueOf()
         if(!TimeLine.main._isPause)
         {
             //判断是否应该执行具体的帧频函数, 判断条件为为否达到帧频跨度
@@ -1574,7 +1585,7 @@ class TimeLine extends BaseObject{
             }
         }else{
             //停止动画
-            clearInterval(TimeLine.main._aniID)
+          TimeLine.main._worker.postMessage({ msg:"stopAnimationFrame"})
         }
     }
 
@@ -1585,6 +1596,7 @@ class TimeLine extends BaseObject{
         TimeLine.main.isPause = true;
     }
 }
+
 
 //动画相关类型声明------------------end------------------
 
@@ -2332,5 +2344,6 @@ module.exports = {
   "GMLVideo": GMLVideo,
   "ResourceManager": ResourceManager,
   "GTool": GTool,
-  "OSManager": OSManager
+  "OSManager": OSManager,
+  "TimeLine": TimeLine
 }

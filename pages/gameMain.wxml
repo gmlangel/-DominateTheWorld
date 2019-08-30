@@ -1,5 +1,6 @@
 <!--pages/gameMain.wxml-->
 <!-- style="margin-top:{{top}}px;margin-left:{{left}}px;width:{{width}}%;height:{{height}}%;scale:{{scale}};" -->
 <canvas canvas-id="gameCanvas"  disable-scroll="true" style="width:100%;height:100%;"  bindtouchstart="onCanvasTouchBegin" bindtouchend="onCanvasTouchEnd" bindtouchmove="onCanvasTouchMove" bindtouchcancel="onCanvasTouchCancel"></canvas>
+<!-- <video style="z-index:1000;position:absolute;top:300rpx;left:0px" src="https://www.juliaol.cn/p4-2-p5-1.mp4" autoplay="true"></video> -->
 
 

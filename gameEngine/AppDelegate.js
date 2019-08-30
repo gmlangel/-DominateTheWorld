@@ -16,13 +16,13 @@ class AppDelegate{
    * @param sysInfo 系统信息
   */
   start(canvasContext,sysInfo){
+    console.log("AppDelegate 启动成功：峰值性能30帧 每帧100个现实对象  实际帧率23")
     if(!!this.isStarted){
       return;
     }
     this.isStarted = true;
     //启动操作
     console.log("游戏开始");
-
     //测试用
     //this.canvasContext.scale(0.5, 0.5);
     let temp = sysInfo.pixelRatio;
