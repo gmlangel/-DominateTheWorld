@@ -1,5 +1,6 @@
 {
   "usingComponents": {},
   "navigationStyle":"default",
-  "navigationBarTitleText": "GML"
+  "navigationBarTitleText": "GML",
+  "pageOrientation":"landscape"
 }
